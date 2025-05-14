@@ -1,5 +1,5 @@
-#ifndef WAVER_DOCKING__PID_PARAMETERS_HPP_
-#define WAVER_DOCKING__PID_PARAMETERS_HPP_
+#ifndef WAVER_DOCKING__PID_PARAMETERS_H_
+#define WAVER_DOCKING__PID_PARAMETERS_H_
 
 #include <string>
 #include "rclcpp/rclcpp.hpp"
@@ -27,4 +27,4 @@ private:
 
 }  // namespace waver_docking
 
-#endif  // WAVER_DOCKING__PID_PARAMETERS_HPP_
+#endif  // WAVER_DOCKING__PID_PARAMETERS_H_

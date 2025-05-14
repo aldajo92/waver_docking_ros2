@@ -7,14 +7,14 @@ def generate_launch_description():
     params_file = os.path.join(
         get_package_share_directory('waver_docking'),
         'params',
-        'pid_params.yaml'
+        'docking_params.yaml'
     )
 
     return LaunchDescription([
         Node(
             package='waver_docking',
             executable='docking_node',
-            name='pid_node',
+            name='docking_node',
             output='screen',
             parameters=[params_file]
         )

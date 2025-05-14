@@ -15,6 +15,7 @@ find_package(yaml-cpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 include_directories(include)
+include_directories(include/pid_module)
 
 # Add the pid_module source files
 add_library(pid_module STATIC 
@@ -35,6 +36,7 @@ target_include_directories(pid_parameters PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/pid_module>
     $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:include/pid_module>
 )
 
 ament_target_dependencies(pid_parameters
@@ -51,8 +53,25 @@ target_include_directories(docking_node PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
+# Add the docking_parameters source files
+add_library(docking_parameters STATIC
+    src/docking_parameters.cpp
+)
+
+target_include_directories(docking_parameters PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/pid_module>
+    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:include/pid_module>
+)
+
+ament_target_dependencies(docking_parameters
+    rclcpp
+)
+
 # Link the docking_node executable with the required libraries
 target_link_libraries(docking_node
+    docking_parameters
     pid_parameters
     pid_module
 )
