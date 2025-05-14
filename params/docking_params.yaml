@@ -1,0 +1,19 @@
+docking_node:
+  ros__parameters:
+    docking:
+      angular_pid:
+        kp: 1.0
+        ki: 0.1
+        kd: 0.01
+      linear_pid:
+        kp: 2.0
+        ki: 0.2
+        kd: 0.02
+      x_vel_offset: 0.5
+      max_vel_linear: 1.5
+      max_vel_angular: 2.0
+      x_rotation_vertical_factor: 0.8
+      x_rotation_factor_slow: 0.5
+      x_rotation_factor_fast: 1.0
+      stop_error_angle: 0.05
+      stop_error_linear: 0.1

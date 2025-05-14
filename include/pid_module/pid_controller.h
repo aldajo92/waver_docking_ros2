@@ -1,5 +1,5 @@
-#ifndef PID_PID_CONTROLLER_H_
-#define PID_PID_CONTROLLER_H_
+#ifndef PID_MODULE_PID_CONTROLLER_H_
+#define PID_MODULE_PID_CONTROLLER_H_
 
 namespace pid_module
 {
@@ -31,4 +31,4 @@ private:
 
 }  // namespace pid_module
 
-#endif  // PID_PID_CONTROLLER_H_
+#endif  // PID_MODULE_PID_CONTROLLER_H_

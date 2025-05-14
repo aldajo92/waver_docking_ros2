@@ -1,46 +1,60 @@
 #include "rclcpp/rclcpp.hpp"
-#include "pid_controller.h"
+#include "waver_docking/docking_parameters.h"
+#include "pid_module/pid_controller.h"
 
-class PIDNode : public rclcpp::Node
+class DockingNode : public rclcpp::Node
 {
 public:
-  PIDNode()
-  : Node("pid_node"), pid_(1.0, 0.1, 0.01)
+  DockingNode()
+  : Node("docking_node"),
+    docking_parameters_(*this),
+    angular_pid_(docking_parameters_.createAngularController()),
+    linear_pid_(docking_parameters_.createLinearController())
   {
     timer_ = this->create_wall_timer(
-      std::chrono::milliseconds(100),  // 10 Hz
-      std::bind(&PIDNode::controlLoop, this)
+      std::chrono::milliseconds(100),
+      std::bind(&DockingNode::controlLoop, this)
     );
-    RCLCPP_INFO(this->get_logger(), "PID Node has been started.");
+
+    RCLCPP_INFO(this->get_logger(), "Docking Node has been started.");
+
+    // Print loaded parameters
+    RCLCPP_INFO(this->get_logger(), "x_vel_offset: %f", docking_parameters_.x_vel_offset);
+    RCLCPP_INFO(this->get_logger(), "max_vel_linear: %f", docking_parameters_.max_vel_linear);
+    RCLCPP_INFO(this->get_logger(), "max_vel_angular: %f", docking_parameters_.max_vel_angular);
+    RCLCPP_INFO(this->get_logger(), "x_rotation_vertical_factor: %f", docking_parameters_.x_rotation_vertical_factor);
+    RCLCPP_INFO(this->get_logger(), "x_rotation_factor_slow: %f", docking_parameters_.x_rotation_factor_slow);
+    RCLCPP_INFO(this->get_logger(), "x_rotation_factor_fast: %f", docking_parameters_.x_rotation_factor_fast);
+    RCLCPP_INFO(this->get_logger(), "stop_error_angle: %f", docking_parameters_.stop_error_angle);
+    RCLCPP_INFO(this->get_logger(), "stop_error_linear: %f", docking_parameters_.stop_error_linear);
+    RCLCPP_INFO(this->get_logger(), "fiducial_positions_file: %s", docking_parameters_.fiducial_positions_file.c_str());
   }
 
 private:
   void controlLoop()
   {
-    // Simulate an error signal (e.g., target - current position)
-    double error = 10.0 - current_position_;
-    double dt = 0.1;  // Time step (100 ms)
+    // Example usage: simulate error for angular and linear controllers
+    double angular_error = 1.0; // Replace with real error
+    double linear_error = 2.0;  // Replace with real error
+    double dt = 0.1;
 
-    // Compute control output using the PID controller
-    double control_output = pid_.compute(error, dt);
+    double angular_output = angular_pid_.compute(angular_error, dt);
+    double linear_output = linear_pid_.compute(linear_error, dt);
 
-    // Update the current position (for simulation purposes)
-    current_position_ += control_output * dt;
-
-    // Log the control output and current position
-    RCLCPP_INFO(this->get_logger(), "Error: %.2f, Control Output: %.2f, Position: %.2f",
-                error, control_output, current_position_);
+    RCLCPP_INFO(this->get_logger(), "Angular Output: %.2f, Linear Output: %.2f",
+                angular_output, linear_output);
   }
 
-  pid_module::PIDController pid_;              // PID controller instance
-  double current_position_ = 0.0;       // Simulated current position
-  rclcpp::TimerBase::SharedPtr timer_;  // Timer for periodic updates
+  waver_docking::DockingParameters docking_parameters_;
+  pid_module::PIDController angular_pid_;
+  pid_module::PIDController linear_pid_;
+  rclcpp::TimerBase::SharedPtr timer_;
 };
 
 int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<PIDNode>());
+  rclcpp::spin(std::make_shared<DockingNode>());
   rclcpp::shutdown();
   return 0;
 }

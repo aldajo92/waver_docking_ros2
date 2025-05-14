@@ -1,9 +1,9 @@
-#ifndef WAVER_DOCKING__PID_PARAMETERS_HPP_
-#define WAVER_DOCKING__PID_PARAMETERS_HPP_
+#ifndef WAVER_DOCKING__PID_PARAMETERS_H_
+#define WAVER_DOCKING__PID_PARAMETERS_H_
 
 #include <string>
 #include "rclcpp/rclcpp.hpp"
-#include "pid_controller.hpp"  // Include the PIDController header
+#include "pid_controller.h"
 
 namespace waver_docking
 {
@@ -13,7 +13,7 @@ class PIDParameters
 public:
   PIDParameters(rclcpp::Node & node, const std::string & ns);
 
-  pid::PIDController make_controller() const;
+  pid_module::PIDController make_controller() const;
 
   double kp() const;
   double ki() const;
@@ -27,4 +27,4 @@ private:
 
 }  // namespace waver_docking
 
-#endif  // WAVER_DOCKING__PID_PARAMETERS_HPP_
+#endif  // WAVER_DOCKING__PID_PARAMETERS_H_
