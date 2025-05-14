@@ -32,7 +32,7 @@ private:
                 error, control_output, current_position_);
   }
 
-  pid::PIDController pid_;              // PID controller instance
+  pid_module::PIDController pid_;              // PID controller instance
   double current_position_ = 0.0;       // Simulated current position
   rclcpp::TimerBase::SharedPtr timer_;  // Timer for periodic updates
 };

@@ -1,6 +1,6 @@
 #include "pid_controller.h"
 
-namespace pid
+namespace pid_module
 {
 
 PIDController::PIDController(double kp, double ki, double kd)
@@ -24,4 +24,4 @@ double PIDController::compute(double error, double dt)
   return p + i + d;
 }
 
-}  // namespace pid
+}  // namespace pid_module

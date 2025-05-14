@@ -17,19 +17,36 @@ find_package(Eigen3 REQUIRED)
 include_directories(include)
 
 # Add the PID controller source files
-add_library(pid STATIC 
-    src/pid/pid_controller.cpp
+add_library(pid_module STATIC 
+    src/pid_module/pid_controller.cpp
 )
 
-target_include_directories(pid PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/pid>
-    $<INSTALL_INTERFACE:include/pid>
+target_include_directories(pid_module PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/pid_module>
+    $<INSTALL_INTERFACE:include/pid_module>
 )
 
+# Add the PID parameters source files
+add_library(pid_parameters STATIC 
+    src/pid_parameters.cpp
+)
+
+target_include_directories(pid_parameters PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/pid_module>
+    $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(pid_parameters
+    rclcpp
+)
+
+# Add the docking node executable
 add_executable(docking_node src/docking_node.cpp)
 
 target_link_libraries(docking_node
-    pid
+    pid_module
+    pid_parameters
 )
 
 ament_target_dependencies(docking_node
@@ -38,33 +55,5 @@ ament_target_dependencies(docking_node
 install(TARGETS docking_node
     DESTINATION lib/${PROJECT_NAME}
 )
-
-# ament_target_dependencies(docking_controller_node
-#   rclcpp
-#   rclcpp_action
-#   geometry_msgs
-#   taskbot_docking_interfaces
-#   tf2_ros
-#   tf2_geometry_msgs
-#   yaml-cpp
-#   Eigen3
-# )
-# install(TARGETS docking_controller_node
-#   DESTINATION lib/${PROJECT_NAME}
-# )
-
-
-
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
 
 ament_package()
