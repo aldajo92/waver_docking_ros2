@@ -1,16 +1,22 @@
 #include "rclcpp/rclcpp.hpp"
-#include "pid_controller.h"
+#include "waver_docking/pid_parameters.h"
+#include "pid_module/pid_controller.h"
 
 class PIDNode : public rclcpp::Node
 {
 public:
   PIDNode()
-  : Node("pid_node"), pid_(1.0, 0.1, 0.01)
+  : Node("pid_node"), pid_parameters_(*this, "pid"), pid_(pid_parameters_.make_controller())
   {
+    // Initialize the PID controller using the parameters
+    pid_ = pid_parameters_.make_controller();
+
+    // Create a timer to simulate the control loop
     timer_ = this->create_wall_timer(
       std::chrono::milliseconds(100),  // 10 Hz
       std::bind(&PIDNode::controlLoop, this)
     );
+
     RCLCPP_INFO(this->get_logger(), "PID Node has been started.");
   }
 
@@ -32,9 +38,10 @@ private:
                 error, control_output, current_position_);
   }
 
-  pid_module::PIDController pid_;              // PID controller instance
-  double current_position_ = 0.0;       // Simulated current position
-  rclcpp::TimerBase::SharedPtr timer_;  // Timer for periodic updates
+  waver_docking::PIDParameters pid_parameters_;  // PIDParameters instance
+  pid_module::PIDController pid_;               // PIDController instance
+  double current_position_ = 0.0;               // Simulated current position
+  rclcpp::TimerBase::SharedPtr timer_;          // Timer for periodic updates
 };
 
 int main(int argc, char **argv)
