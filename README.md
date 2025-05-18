@@ -4,7 +4,11 @@ This is a ROS2 package made in C++ as a proof of concept to implement a modified
 
 # Execution
 ```bash
-ros2 run waver_docking docking_node --ros-args --params-file ./src/waver_docking/params/pid_params.yaml
+ros2 run waver_docking docking_node --ros-args --params-file ./src/waver_docking/params/docking_params.yaml
+
+# or
+
+ros2 launch waver_docking docking.launch.py
 ```
 
 ## Author

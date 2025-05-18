@@ -24,9 +24,14 @@ public:
     Q_.x() = this->get_parameter("Q.x").as_double();
     Q_.y() = this->get_parameter("Q.y").as_double();
 
+    // Create a 2D rotation matrix for 90 degrees (counterclockwise)
+    Eigen::Matrix2d rot90;
+    rot90 << 0, -1,
+            1,  0;
+
     PQMid_ = (P_ + Q_) / 2.0;
-    e_X_ = Q_ - PQMid_;
-    e_Y_ = Eigen::Vector2d::Zero(); // Or however you want to define it
+    e_X_ = (Q_ - PQMid_).normalized();
+    e_Y_ = rot90 * e_X_;
 
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(100), // 10 Hz
