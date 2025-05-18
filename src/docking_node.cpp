@@ -5,6 +5,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include "geometry_msgs/msg/twist.hpp"
 
 class DockingNode : public rclcpp::Node
 {
@@ -76,8 +77,11 @@ public:
     //     std::bind(&DockingNode::controlLoop, this));
     
     position_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(50), // 20 Hz
+        std::chrono::milliseconds(200), // 5 Hz
         std::bind(&DockingNode::positionLoop, this));
+
+    ////////////////////////// Publisher for control commands
+    cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
     RCLCPP_INFO(this->get_logger(), "PID Node has been started.");
   }
@@ -110,25 +114,32 @@ private:
   }
 
   void positionLoop()
+{
+  // Check if the transform is available
+  if (tf_buffer_->canTransform(
+          "map",           // target frame
+          source_frame_,   // source frame
+          tf2::TimePointZero, // latest available
+          std::chrono::milliseconds(10))) // timeout
   {
     try {
       geometry_msgs::msg::TransformStamped transformStamped =
           tf_buffer_->lookupTransform(
-              "map",        // target frame
-              source_frame_,  // source frame
-              tf2::TimePointZero  // get latest available
+              "map",
+              source_frame_,
+              tf2::TimePointZero
           );
-      // Access translation and rotation:
       auto trans = transformStamped.transform.translation;
       auto rot = transformStamped.transform.rotation;
-      // Example: print translation
       RCLCPP_INFO(this->get_logger(), "base_link transl in map: (%.2f, %.2f, %.2f)", trans.x, trans.y, trans.z);
       RCLCPP_INFO(this->get_logger(), "base_link rot in map: (%.2f, %.2f, %.2f, %.2f)", rot.x, rot.y, rot.z, rot.w);
     } catch (const tf2::TransformException & ex) {
-        RCLCPP_WARN(this->get_logger(), "Could not get transform: %s", ex.what());
+      RCLCPP_WARN(this->get_logger(), "Could not get transform: %s", ex.what());
     }
-
+  } else {
+    // RCLCPP_WARN(this->get_logger(), "Transform from %s to map not available yet.", source_frame_.c_str());
   }
+}
 
   double vector_angle(Eigen::Vector2d vector) const
   {
@@ -155,6 +166,9 @@ private:
   pid_module::PIDController angle_pid_;
   double current_distance_ = 0.0;
   double current_angle_ = 0.0;
+
+  // Publisher for control commands
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
 
   // Timer for control loop
   rclcpp::TimerBase::SharedPtr control_timer_;
