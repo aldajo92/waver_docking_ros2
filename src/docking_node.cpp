@@ -2,6 +2,9 @@
 #include "waver_docking/pid_parameters.h"
 #include "pid_module/pid_controller.h"
 #include <Eigen/Dense>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 
 class DockingNode : public rclcpp::Node
 {
@@ -24,6 +27,8 @@ public:
     Q_.x() = this->get_parameter("Q.x").as_double();
     Q_.y() = this->get_parameter("Q.y").as_double();
 
+    ////////////////////////// Docking parameters initialization
+
     // Create a 2D rotation matrix for 90 degrees (PI/2 radians, counterclockwise)
     double angle = M_PI / 2.0; // 90 degrees in radians
     Eigen::Matrix2d rot90;
@@ -41,6 +46,13 @@ public:
 
     Eigen::Matrix2d matrix_basis_inv = matrix_basis.inverse();
 
+    ////////////////////////// Robot Position
+
+    tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
+    ////////////////////////// Timer for control loop
+
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(100), // 10 Hz
         std::bind(&DockingNode::controlLoop, this));
@@ -51,6 +63,23 @@ public:
 private:
   void controlLoop()
   {
+
+    //   try {
+    //     geometry_msgs::msg::TransformStamped transformStamped =
+    //         tf_buffer_->lookupTransform(
+    //             "map",        // target frame
+    //             "base_link",  // source frame
+    //             tf2::TimePointZero  // get latest available
+    //         );
+    //     // Access translation and rotation:
+    //     auto trans = transformStamped.transform.translation;
+    //     auto rot = transformStamped.transform.rotation;
+    //     // Example: print translation
+    //     RCLCPP_INFO(this->get_logger(), "base_link in map: (%.2f, %.2f, %.2f)", trans.x, trans.y, trans.z);
+    // } catch (const tf2::TransformException & ex) {
+    //     RCLCPP_WARN(this->get_logger(), "Could not transform: %s", ex.what());
+    // }
+
     double distance_error = 10.0 - current_distance_;
     double angle_error = 1.0 - current_angle_;
     double dt = 0.1;
@@ -60,6 +89,8 @@ private:
 
     current_distance_ += distance_output * dt;
     current_angle_ += angle_output * dt;
+
+    // TODO: This values can be enabled/disabled by a parameter later
 
     RCLCPP_INFO(this->get_logger(), "P: (%.2f, %.2f), Q: (%.2f, %.2f), PQMid: (%.2f, %.2f)",
                 P_.x(), P_.y(), Q_.x(), Q_.y(), PQMid_.x(), PQMid_.y());
@@ -79,17 +110,24 @@ private:
     return std::atan2(vector.y(), vector.x());
   }
 
+  // Docking parameters
   waver_docking::PIDParameters distance_pid_params_;
   waver_docking::PIDParameters angle_pid_params_;
   Eigen::Vector2d P_, Q_, PQMid_;
   Eigen::Vector2d e_X_, e_Y_;
   double e_Y_angle_ = 0.0;
 
+  // Robot position
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+
+  // PID controllers
   pid_module::PIDController distance_pid_;
   pid_module::PIDController angle_pid_;
   double current_distance_ = 0.0;
   double current_angle_ = 0.0;
 
+  // Timer for control loop
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
