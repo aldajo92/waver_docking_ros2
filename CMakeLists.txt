@@ -57,6 +57,7 @@ target_include_directories(docking_node PUBLIC
 target_link_libraries(docking_node
     pid_parameters
     pid_module
+    Eigen3::Eigen
 )
 
 ament_target_dependencies(docking_node

@@ -6,7 +6,7 @@ docking_node:
     angle_pid.kp: 2.0
     angle_pid.ki: 0.2
     angle_pid.kd: 0.02
-    P.x: 0.0
-    P.y: 0.0
+    P.x: 1.0
+    P.y: 1.0
     Q.x: 0.0
     Q.y: 0.0

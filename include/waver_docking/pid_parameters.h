@@ -9,18 +9,6 @@ namespace waver_docking
 {
 
 /**
- * @brief Struct to represent a 2D point.
- *
- * This struct is used to define points in a 2D space, for
- * positions or coordinates.
- */
-struct Point
-{
-  double x;
-  double y;
-};
-
-/**
  * @brief Class to manage PID parameters for a controller.
  *
  * This class handles the retrieval and storage of PID parameters
