@@ -53,25 +53,8 @@ target_include_directories(docking_node PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-# Add the docking_parameters source files
-add_library(docking_parameters STATIC
-    src/docking_parameters.cpp
-)
-
-target_include_directories(docking_parameters PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/pid_module>
-    $<INSTALL_INTERFACE:include>
-    $<INSTALL_INTERFACE:include/pid_module>
-)
-
-ament_target_dependencies(docking_parameters
-    rclcpp
-)
-
 # Link the docking_node executable with the required libraries
 target_link_libraries(docking_node
-    docking_parameters
     pid_parameters
     pid_module
 )
