@@ -13,6 +13,9 @@ PIDParameters::PIDParameters(rclcpp::Node & node, const std::string & ns)
     node.get_parameter(ns + ".kp", kp_);
     node.get_parameter(ns + ".ki", ki_);
     node.get_parameter(ns + ".kd", kd_);
+
+    // Print the parameters
+    RCLCPP_INFO(node.get_logger(), "PID parameters for %s: kp=%.2f, ki=%.2f, kd=%.2f", ns.c_str(), kp_, ki_, kd_);
 }
 
 pid_module::PIDController PIDParameters::make_controller() const
