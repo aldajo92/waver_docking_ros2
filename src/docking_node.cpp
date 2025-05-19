@@ -43,7 +43,7 @@ public:
     double angle = M_PI / 2.0; // 90 degrees in radians
     Eigen::Matrix2d rot90;
     rot90 << cos(angle), -sin(angle),
-         sin(angle),  cos(angle);
+        sin(angle), cos(angle);
 
     PQMid_ = (P_ + Q_) / 2.0;
     e_X_ = (Q_ - PQMid_).normalized();
@@ -58,12 +58,12 @@ public:
 
     // Print the matrices
     RCLCPP_INFO(this->get_logger(), "Matrix Basis:\n[%.2f, %.2f]\n[%.2f, %.2f]",
-          matrix_basis(0, 0), matrix_basis(0, 1),
-          matrix_basis(1, 0), matrix_basis(1, 1));
+                matrix_basis(0, 0), matrix_basis(0, 1),
+                matrix_basis(1, 0), matrix_basis(1, 1));
 
     RCLCPP_INFO(this->get_logger(), "Matrix Basis Inverse:\n[%.2f, %.2f]\n[%.2f, %.2f]",
-          matrix_basis_inv(0, 0), matrix_basis_inv(0, 1),
-          matrix_basis_inv(1, 0), matrix_basis_inv(1, 1));
+                matrix_basis_inv(0, 0), matrix_basis_inv(0, 1),
+                matrix_basis_inv(1, 0), matrix_basis_inv(1, 1));
 
     ////////////////////////// Robot Position
 
@@ -71,13 +71,13 @@ public:
     tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
     ////////////////////////// Timers for control loop
-
+    // TODO: Enable this once position loop is working
     // control_timer_ = this->create_wall_timer(
     //     std::chrono::milliseconds(100), // 10 Hz
     //     std::bind(&DockingNode::controlLoop, this));
-    
+
     position_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(200), // 5 Hz
+        std::chrono::milliseconds(100), // 10 Hz
         std::bind(&DockingNode::positionLoop, this));
 
     ////////////////////////// Publisher for control commands
@@ -99,8 +99,7 @@ private:
     current_distance_ += distance_output * dt;
     current_angle_ += angle_output * dt;
 
-    // TODO: This values can be enabled/disabled by a parameter later
-
+    // TODO: This logs can be disabled by a parameter later
     RCLCPP_INFO(this->get_logger(), "P: (%.2f, %.2f), Q: (%.2f, %.2f), PQMid: (%.2f, %.2f)",
                 P_.x(), P_.y(), Q_.x(), Q_.y(), PQMid_.x(), PQMid_.y());
     RCLCPP_INFO(this->get_logger(), "e_X: (%.2f, %.2f), e_Y: (%.2f, %.2f)",
@@ -114,36 +113,52 @@ private:
   }
 
   void positionLoop()
-{
-  // Check if the transform is available
-  if (tf_buffer_->canTransform(
-          "map",           // target frame
-          source_frame_,   // source frame
-          tf2::TimePointZero, // latest available
-          std::chrono::milliseconds(10))) // timeout
   {
-    try {
-      geometry_msgs::msg::TransformStamped transformStamped =
-          tf_buffer_->lookupTransform(
-              "map",
-              source_frame_,
-              tf2::TimePointZero
-          );
-      auto trans = transformStamped.transform.translation;
-      auto rot = transformStamped.transform.rotation;
-      RCLCPP_INFO(this->get_logger(), "base_link transl in map: (%.2f, %.2f, %.2f)", trans.x, trans.y, trans.z);
-      RCLCPP_INFO(this->get_logger(), "base_link rot in map: (%.2f, %.2f, %.2f, %.2f)", rot.x, rot.y, rot.z, rot.w);
-    } catch (const tf2::TransformException & ex) {
-      RCLCPP_WARN(this->get_logger(), "Could not get transform: %s", ex.what());
+    // Check if the transform is available
+    if (tf_buffer_->canTransform(
+            "map",                          // target frame
+            source_frame_,                  // source frame
+            tf2::TimePointZero,             // latest available
+            std::chrono::milliseconds(10))) // timeout
+    {
+      try
+      {
+        geometry_msgs::msg::TransformStamped transformStamped =
+            tf_buffer_->lookupTransform(
+                "map",
+                source_frame_,
+                tf2::TimePointZero);
+        auto trans = transformStamped.transform.translation;
+        auto rot = transformStamped.transform.rotation;
+
+        // Convert quaternion to yaw
+        double siny_cosp = 2.0 * (rot.w * rot.z + rot.x * rot.y);
+        double cosy_cosp = 1.0 - 2.0 * (rot.y * rot.y + rot.z * rot.z);
+        double yaw = std::atan2(siny_cosp, cosy_cosp);
+
+        // Update robot position and yaw
+        {
+          std::lock_guard<std::mutex> lock(pose_mutex_);
+          robot_position_ = Eigen::Vector2d(trans.x, trans.y);
+          robot_yaw_ = yaw;
+        }
+
+        RCLCPP_INFO(this->get_logger(), "base_link transl in map: (%.2f, %.2f, %.2f)", trans.x, trans.y, trans.z);
+        RCLCPP_INFO(this->get_logger(), "base_link rot in map: (%.2f, %.2f, %.2f, %.2f)", rot.x, rot.y, rot.z, rot.w);
+      }
+      catch (const tf2::TransformException &ex)
+      {
+        RCLCPP_WARN(this->get_logger(), "Could not get transform: %s", ex.what());
+      }
     }
-  } else {
-    // RCLCPP_WARN(this->get_logger(), "Transform from %s to map not available yet.", source_frame_.c_str());
+    else
+    {
+      // RCLCPP_WARN(this->get_logger(), "Transform from %s to map not available yet.", source_frame_.c_str());
+    }
   }
-}
 
   double vector_angle(Eigen::Vector2d vector) const
   {
-    // Calculate the angle in radians
     return std::atan2(vector.y(), vector.x());
   }
 
@@ -160,6 +175,10 @@ private:
   // Robot position
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+
+  std::mutex pose_mutex_;
+  Eigen::Vector2d robot_position_{0.0, 0.0};
+  double robot_yaw_{0.0};
 
   // PID controllers
   pid_module::PIDController distance_pid_;
