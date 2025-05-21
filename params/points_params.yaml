@@ -1,0 +1,6 @@
+points_node:
+  ros__parameters:
+    P.x: 1.0
+    P.y: 1.0
+    Q.x: 0.0
+    Q.y: 0.0

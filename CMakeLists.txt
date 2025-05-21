@@ -9,6 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(tf2_ros REQUIRED)
@@ -64,14 +65,27 @@ ament_target_dependencies(docking_node
     rclcpp
     tf2_ros
 )
+
+# Install Python modules
+install(PROGRAMS
+  src/graph_2d_pub_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 install(TARGETS docking_node
     DESTINATION lib/${PROJECT_NAME}
 )
+
 install(DIRECTORY params/
   DESTINATION share/${PROJECT_NAME}/params
 )
+
 install(DIRECTORY launch/
   DESTINATION share/${PROJECT_NAME}/launch
+)
+
+install(DIRECTORY rviz/
+  DESTINATION share/${PROJECT_NAME}/rviz
 )
 
 ament_package()
