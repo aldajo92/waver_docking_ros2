@@ -66,9 +66,9 @@ ament_target_dependencies(docking_node
     tf2_ros
 )
 
-# Install Python modules
+# Install Python scripts
 install(PROGRAMS
-  src/interactive_points_node.py
+  scripts/interactive_points_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
