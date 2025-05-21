@@ -80,7 +80,7 @@ public:
     //     std::bind(&DockingNode::controlLoop, this));
 
     position_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(100), // 10 Hz
+        std::chrono::milliseconds(200), // 5 Hz
         std::bind(&DockingNode::positionLoop, this));
 
     ////////////////////////// Publisher for control commands
@@ -101,6 +101,13 @@ private:
 
     current_distance_ += distance_output * dt;
     current_angle_ += angle_output * dt;
+
+
+    {
+        std::lock_guard<std::mutex> lock(pose_mutex_);
+        RCLCPP_INFO(this->get_logger(), "Robot position: (%.2f, %.2f), yaw: %.2f",
+                    robot_position_.x(), robot_position_.y(), robot_yaw_);
+    }
 
     // TODO: This logs can be disabled by a parameter later
     RCLCPP_INFO(this->get_logger(), "P: (%.2f, %.2f), Q: (%.2f, %.2f), PQMid: (%.2f, %.2f)",

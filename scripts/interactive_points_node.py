@@ -2,7 +2,7 @@
 
 import rclpy
 from rclpy.node import Node
-from visualization_msgs.msg import Marker, InteractiveMarker, InteractiveMarkerControl
+from visualization_msgs.msg import Marker, InteractiveMarker, InteractiveMarkerControl, MarkerArray
 from geometry_msgs.msg import Point, Quaternion
 from std_msgs.msg import ColorRGBA
 from interactive_markers.interactive_marker_server import InteractiveMarkerServer
@@ -13,7 +13,7 @@ class InteractiveGraphNode(Node):
         super().__init__('interactive_graph_node')
         
         # Create marker publisher for the graph visualization
-        self.marker_pub = self.create_publisher(Marker, 'visualization_marker', 10)
+        self.marker_array_pub = self.create_publisher(MarkerArray, 'visualization_marker_array', 10)
         
         # Create interactive marker server
         self.server = InteractiveMarkerServer(self, "graph_points")
@@ -48,6 +48,7 @@ class InteractiveGraphNode(Node):
         self.blue_color = ColorRGBA(r=0.0, g=0.0, b=1.0, a=1.0)
         self.p_color = ColorRGBA(r=0.0, g=0.0, b=1.0, a=1.0)  # For P
         self.q_color = ColorRGBA(r=0.0, g=1.0, b=0.0, a=1.0)  # For Q
+        self.green_color = ColorRGBA(r=0.0, g=1.0, b=0.0, a=1.0)  # For perpendicular markers
         
         # Create interactive markers for P and Q
         self.create_point_marker("P", self.p_point, self.p_color)
@@ -111,6 +112,51 @@ class InteractiveGraphNode(Node):
         self.server.insert(int_marker)
         self.server.applyChanges()
 
+    def create_perpendicular_markers(self) -> Marker:
+        """Create markers perpendicular to P-Q line."""
+        marker = Marker()
+        marker.header.frame_id = self.fixed_frame
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = "perpendicular_points"
+        marker.id = 1
+        marker.type = Marker.POINTS
+        marker.action = Marker.ADD
+        
+        # Set the scale
+        marker.scale.x = 0.05
+        marker.scale.y = 0.05
+        marker.scale.z = 0.05
+        
+        # Set the color
+        marker.color = self.green_color
+        
+        # Calculate midpoint
+        x_mid = (self.p_point.x + self.q_point.x) / 2
+        y_mid = (self.p_point.y + self.q_point.y) / 2
+        
+        # Calculate direction vector P->Q
+        x_dir = self.q_point.x - self.p_point.x
+        y_dir = self.q_point.y - self.p_point.y
+        
+        # Normalize direction vector
+        dir_norm = np.sqrt(np.square(x_dir) + np.square(y_dir))
+        if dir_norm > 0:  # Avoid division by zero
+            # Rotate 90 degrees to get perpendicular direction
+            angle = np.radians(-90)
+            x_dir_new = (x_dir*np.cos(angle) - y_dir*np.sin(angle)) / dir_norm
+            y_dir_new = (x_dir*np.sin(angle) + y_dir*np.cos(angle)) / dir_norm
+            
+            # Create points along perpendicular line
+            marker.points = []
+            for t in range(0, 3):
+                point = Point()
+                point.x = x_mid + (t * x_dir_new)
+                point.y = y_mid + (t * y_dir_new)
+                point.z = 0.0
+                marker.points.append(point)
+        
+        return marker
+
     def marker_feedback(self, feedback):
         # Update point position based on feedback
         if feedback.marker_name == "P":
@@ -152,9 +198,17 @@ class InteractiveGraphNode(Node):
         # Toggle color
         self.is_red = not self.is_red
         
-        # Create and publish marker with all points
-        marker = self.create_graph_marker()
-        self.marker_pub.publish(marker)
+        # Create marker array
+        marker_array = MarkerArray()
+        
+        # Add graph points marker
+        marker_array.markers.append(self.create_graph_marker())
+        
+        # Add perpendicular markers
+        marker_array.markers.append(self.create_perpendicular_markers())
+        
+        # Publish marker array
+        self.marker_array_pub.publish(marker_array)
 
 def main(args=None):
     rclpy.init(args=args)
