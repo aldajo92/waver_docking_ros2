@@ -11,11 +11,11 @@ def generate_launch_description():
     rviz_config = os.path.join(pkg_dir, 'rviz', 'show_points.rviz')
     
     return LaunchDescription([
-        # Launch the points publisher node
+        # Launch the interactive graph node
         Node(
             package='waver_docking',
-            executable='graph_2d_pub_node.py',
-            name='graph_2d_pub_node',
+            executable='interactive_graph_node.py',
+            name='interactive_graph_node',
             parameters=[params_file],
             output='screen'
         ),

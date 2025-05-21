@@ -68,7 +68,7 @@ ament_target_dependencies(docking_node
 
 # Install Python modules
 install(PROGRAMS
-  src/graph_2d_pub_node.py
+  src/interactive_points_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
