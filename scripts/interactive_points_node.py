@@ -134,15 +134,15 @@ class InteractiveGraphNode(Node):
         x_mid = (self.p_point.x + self.q_point.x) / 2
         y_mid = (self.p_point.y + self.q_point.y) / 2
         
-        # Calculate direction vector P->Q
-        x_dir = self.q_point.x - self.p_point.x
-        y_dir = self.q_point.y - self.p_point.y
+        # Calculate direction vector Q->P
+        x_dir = self.p_point.x - self.q_point.x
+        y_dir = self.p_point.y - self.q_point.y
         
-        # Normalize direction vector
+        # Normalize direction vector Q->P
         dir_norm = np.sqrt(np.square(x_dir) + np.square(y_dir))
         if dir_norm > 0:  # Avoid division by zero
             # Rotate 90 degrees to get perpendicular direction
-            angle = np.radians(-90)
+            angle = np.radians(90)
             x_dir_new = (x_dir*np.cos(angle) - y_dir*np.sin(angle)) / dir_norm
             y_dir_new = (x_dir*np.sin(angle) + y_dir*np.cos(angle)) / dir_norm
             

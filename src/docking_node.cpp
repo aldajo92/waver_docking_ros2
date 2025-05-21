@@ -75,9 +75,9 @@ public:
 
     ////////////////////////// Timers for control loop
     // TODO: Enable this once position loop is working
-    // control_timer_ = this->create_wall_timer(
-    //     std::chrono::milliseconds(100), // 10 Hz
-    //     std::bind(&DockingNode::controlLoop, this));
+    control_timer_ = this->create_wall_timer(
+        std::chrono::milliseconds(100), // 10 Hz
+        std::bind(&DockingNode::controlLoop, this));
 
     position_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(200), // 5 Hz
@@ -102,24 +102,23 @@ private:
     current_distance_ += distance_output * dt;
     current_angle_ += angle_output * dt;
 
-
     {
         std::lock_guard<std::mutex> lock(pose_mutex_);
         RCLCPP_INFO(this->get_logger(), "Robot position: (%.2f, %.2f), yaw: %.2f",
                     robot_position_.x(), robot_position_.y(), robot_yaw_);
     }
 
-    // TODO: This logs can be disabled by a parameter later
-    RCLCPP_INFO(this->get_logger(), "P: (%.2f, %.2f), Q: (%.2f, %.2f), PQMid: (%.2f, %.2f)",
-                P_.x(), P_.y(), Q_.x(), Q_.y(), PQMid_.x(), PQMid_.y());
-    RCLCPP_INFO(this->get_logger(), "e_X: (%.2f, %.2f), e_Y: (%.2f, %.2f)",
-                e_X_.x(), e_X_.y(), e_Y_.x(), e_Y_.y());
-    RCLCPP_INFO(this->get_logger(), "e_Y_angle: %.2f", e_Y_angle_);
-    RCLCPP_INFO(this->get_logger(), "e_Y_angle in degrees: %.2f", e_Y_angle_ * 180.0 / M_PI);
-    RCLCPP_INFO(this->get_logger(),
-                "\nDist \t Error: %.2f, Output: %.2f, Distance: %.2f \nAngle \t Error: %.2f, Output: %.2f, Angle: %.2f",
-                distance_error, distance_output, current_distance_,
-                angle_error, angle_output, current_angle_);
+    // TODO: This logs can be enabled by a parameter
+    // RCLCPP_INFO(this->get_logger(), "P: (%.2f, %.2f), Q: (%.2f, %.2f), PQMid: (%.2f, %.2f)",
+    //             P_.x(), P_.y(), Q_.x(), Q_.y(), PQMid_.x(), PQMid_.y());
+    // RCLCPP_INFO(this->get_logger(), "e_X: (%.2f, %.2f), e_Y: (%.2f, %.2f)",
+    //             e_X_.x(), e_X_.y(), e_Y_.x(), e_Y_.y());
+    // RCLCPP_INFO(this->get_logger(), "e_Y_angle: %.2f", e_Y_angle_);
+    // RCLCPP_INFO(this->get_logger(), "e_Y_angle in degrees: %.2f", e_Y_angle_ * 180.0 / M_PI);
+    // RCLCPP_INFO(this->get_logger(),
+    //             "\nDist \t Error: %.2f, Output: %.2f, Distance: %.2f \nAngle \t Error: %.2f, Output: %.2f, Angle: %.2f",
+    //             distance_error, distance_output, current_distance_,
+    //             angle_error, angle_output, current_angle_);
   }
 
   void positionLoop()
@@ -153,20 +152,20 @@ private:
           robot_yaw_ = yaw;
         }
 
-        RCLCPP_INFO(this->get_logger(), "Robot translation in %s: (%.2f, %.2f, %.2f)", 
-                    fixed_frame_.c_str(), trans.x, trans.y, trans.z);
-        RCLCPP_INFO(this->get_logger(), "Robot rotation in %s: (%.2f, %.2f, %.2f, %.2f)", 
-                    fixed_frame_.c_str(), rot.x, rot.y, rot.z, rot.w);
+        // RCLCPP_INFO(this->get_logger(), "Robot translation in %s: (%.2f, %.2f, %.2f)", 
+        //             fixed_frame_.c_str(), trans.x, trans.y, trans.z);
+        // RCLCPP_INFO(this->get_logger(), "Robot rotation in %s: (%.2f, %.2f, %.2f, %.2f)", 
+        //             fixed_frame_.c_str(), rot.x, rot.y, rot.z, rot.w);
       }
       catch (const tf2::TransformException &ex)
       {
-        RCLCPP_WARN(this->get_logger(), "Could not get transform: %s", ex.what());
+        // RCLCPP_WARN(this->get_logger(), "Could not get transform: %s", ex.what());
       }
     }
     else
     {
-      // RCLCPP_WARN(this->get_logger(), "Transform from %s to %s not available yet.", 
-      //             robot_frame_.c_str(), fixed_frame_.c_str());
+      RCLCPP_WARN(this->get_logger(), "Transform from %s to %s not available yet.", 
+                  robot_frame_.c_str(), fixed_frame_.c_str());
     }
   }
 
