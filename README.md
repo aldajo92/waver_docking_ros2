@@ -34,7 +34,10 @@ ros2 launch waver_docking docking.launch.py
 
 ### Point Visualization
 ```bash
-# Launch the point visualization with RViz2
+# Run the graph_2d node with parameters
+ros2 run waver_docking graph_2d_pub_node.py --ros-args --params-file ./src/waver_docking/params/points_params.yaml
+
+# Or launch the point visualization with RViz2
 ros2 launch waver_docking graph_2d_pub.launch.py
 ```
 
@@ -47,14 +50,13 @@ points_node:
     P.y: 1.0  # Y coordinate of point P
     Q.x: 0.0  # X coordinate of point Q
     Q.y: 0.0  # Y coordinate of point Q
-    source_frame: "map"  # TF frame for visualization
+    robot_frame: "base_footprint"  # Robot's reference frame for visualization
 ```
 
 ## Visualization
 The point visualization:
 - Shows points P and Q in RViz2
-- Alternates between red and blue colors (1Hz)
-- Uses the map frame for reference
+- Uses the robot's reference frame (base_footprint by default)
 - Includes a pre-configured RViz2 setup
 
 ## Author

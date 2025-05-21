@@ -19,21 +19,24 @@ public:
   {
 
     // Declare parameters
-    this->declare_parameter("source_frame", "base_link");
+    this->declare_parameter("fixed_frame", "map");
+    this->declare_parameter("robot_frame", "base_link");
     this->declare_parameter("P.x", 0.0);
     this->declare_parameter("P.y", 0.0);
     this->declare_parameter("Q.x", 0.0);
     this->declare_parameter("Q.y", 0.0);
 
     // Get parameters
-    this->get_parameter("source_frame", source_frame_);
+    this->get_parameter("fixed_frame", fixed_frame_);
+    this->get_parameter("robot_frame", robot_frame_);
     P_.x() = this->get_parameter("P.x").as_double();
     P_.y() = this->get_parameter("P.y").as_double();
     Q_.x() = this->get_parameter("Q.x").as_double();
     Q_.y() = this->get_parameter("Q.y").as_double();
 
     // Print parameters
-    RCLCPP_INFO(this->get_logger(), "source_frame: %s", source_frame_.c_str());
+    RCLCPP_INFO(this->get_logger(), "fixed_frame: %s", fixed_frame_.c_str());
+    RCLCPP_INFO(this->get_logger(), "robot_frame: %s", robot_frame_.c_str());
     RCLCPP_INFO(this->get_logger(), "P: (%.2f, %.2f)", P_.x(), P_.y());
     RCLCPP_INFO(this->get_logger(), "Q: (%.2f, %.2f)", Q_.x(), Q_.y());
 
@@ -116,8 +119,8 @@ private:
   {
     // Check if the transform is available
     if (tf_buffer_->canTransform(
-            "map",                          // target frame
-            source_frame_,                  // source frame
+            fixed_frame_,                    // target frame
+            robot_frame_,                    // source frame
             tf2::TimePointZero,             // latest available
             std::chrono::milliseconds(10))) // timeout
     {
@@ -125,8 +128,8 @@ private:
       {
         geometry_msgs::msg::TransformStamped transformStamped =
             tf_buffer_->lookupTransform(
-                "map",
-                source_frame_,
+                fixed_frame_,
+                robot_frame_,
                 tf2::TimePointZero);
         auto trans = transformStamped.transform.translation;
         auto rot = transformStamped.transform.rotation;
@@ -143,8 +146,10 @@ private:
           robot_yaw_ = yaw;
         }
 
-        RCLCPP_INFO(this->get_logger(), "base_link transl in map: (%.2f, %.2f, %.2f)", trans.x, trans.y, trans.z);
-        RCLCPP_INFO(this->get_logger(), "base_link rot in map: (%.2f, %.2f, %.2f, %.2f)", rot.x, rot.y, rot.z, rot.w);
+        RCLCPP_INFO(this->get_logger(), "Robot translation in %s: (%.2f, %.2f, %.2f)", 
+                    fixed_frame_.c_str(), trans.x, trans.y, trans.z);
+        RCLCPP_INFO(this->get_logger(), "Robot rotation in %s: (%.2f, %.2f, %.2f, %.2f)", 
+                    fixed_frame_.c_str(), rot.x, rot.y, rot.z, rot.w);
       }
       catch (const tf2::TransformException &ex)
       {
@@ -153,7 +158,8 @@ private:
     }
     else
     {
-      // RCLCPP_WARN(this->get_logger(), "Transform from %s to map not available yet.", source_frame_.c_str());
+      // RCLCPP_WARN(this->get_logger(), "Transform from %s to %s not available yet.", 
+      //             robot_frame_.c_str(), fixed_frame_.c_str());
     }
   }
 
@@ -162,8 +168,9 @@ private:
     return std::atan2(vector.y(), vector.x());
   }
 
-  // Docking input parameters
-  std::string source_frame_;
+  // Docking input parameters (reordered)
+  std::string fixed_frame_;
+  std::string robot_frame_;
 
   // Docking internal parameters
   waver_docking::PIDParameters distance_pid_params_;

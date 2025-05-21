@@ -15,7 +15,7 @@ def generate_launch_description():
         Node(
             package='waver_docking',
             executable='graph_2d_pub_node.py',
-            name='points_node',
+            name='graph_2d_pub_node',
             parameters=[params_file],
             output='screen'
         ),

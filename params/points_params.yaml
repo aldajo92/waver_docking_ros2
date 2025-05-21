@@ -1,5 +1,6 @@
-points_node:
+graph_2d_pub_node:
   ros__parameters:
+    fixed_frame: "map"
     P.x: 1.0
     P.y: 1.0
     Q.x: 0.0

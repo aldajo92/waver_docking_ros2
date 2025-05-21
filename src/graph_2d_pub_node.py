@@ -19,7 +19,10 @@ class Graph2DPublisherNode(Node):
         self.declare_parameter('P.y', 0.0)
         self.declare_parameter('Q.x', 0.0)
         self.declare_parameter('Q.y', 0.0)
-        self.declare_parameter('source_frame', 'map')
+        self.declare_parameter('fixed_frame', 'map')
+
+        # Get parameters for fixed frame
+        self.fixed_frame = self.get_parameter('fixed_frame').value
         
         # Initialize coordinates as a single numpy array with shape (2, 2)
         # First dimension: points (P, Q)
@@ -38,6 +41,11 @@ class Graph2DPublisherNode(Node):
         
         # Create timer to periodically publish markers
         self.timer = self.create_timer(1.0, self.timer_callback)  # 1Hz update rate
+
+        # Print node information
+        self.get_logger().info(f"Fixed frame: {self.fixed_frame}")
+        self.get_logger().info(f"Point P: ({self.coordinates[0][0]:.2f}, {self.coordinates[0][1]:.2f})")
+        self.get_logger().info(f"Point Q: ({self.coordinates[1][0]:.2f}, {self.coordinates[1][1]:.2f})")
         
     def create_point(self, x: float, y: float) -> Point:
         """Create a ROS Point message."""
@@ -52,7 +60,7 @@ class Graph2DPublisherNode(Node):
             color: ColorRGBA message for marker color
         """
         marker = Marker()
-        marker.header.frame_id = "map"
+        marker.header.frame_id = self.fixed_frame
         marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = "graph_points"
         marker.id = 0
