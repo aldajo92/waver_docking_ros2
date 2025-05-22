@@ -14,8 +14,8 @@ def generate_launch_description():
         # Launch the interactive graph node
         Node(
             package='waver_docking',
-            executable='interactive_graph_node.py',
-            name='interactive_graph_node',
+            executable='interactive_points_node.py',
+            name='interactive_points_node',
             parameters=[params_file],
             output='screen'
         ),

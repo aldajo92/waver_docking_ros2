@@ -8,9 +8,9 @@ from std_msgs.msg import ColorRGBA
 from interactive_markers.interactive_marker_server import InteractiveMarkerServer
 import numpy as np
 
-class InteractiveGraphNode(Node):
+class InteractivePointsNode(Node):
     def __init__(self):
-        super().__init__('interactive_graph_node')
+        super().__init__('interactive_points_node')
         
         # Create marker publisher for the graph visualization
         self.marker_array_pub = self.create_publisher(MarkerArray, 'visualization_marker_array', 10)
@@ -108,7 +108,7 @@ class InteractiveGraphNode(Node):
         int_marker.controls.append(control)
 
         # Set up the callback and add to server
-        self.server.setCallback(int_marker.name, self.marker_feedback)
+        self.server.setCallback(int_marker.name, self.marker_feedback) # Only works in ROS2 Jazzy
         self.server.insert(int_marker)
         self.server.applyChanges()
 
@@ -158,7 +158,7 @@ class InteractiveGraphNode(Node):
         return marker
 
     def marker_feedback(self, feedback):
-        # Update point position based on feedback
+        # Update point position based on feedback: Only works in ROS2 Jazzy
         if feedback.marker_name == "P":
             self.p_point = feedback.pose.position
         elif feedback.marker_name == "Q":
@@ -212,7 +212,7 @@ class InteractiveGraphNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = InteractiveGraphNode()
+    node = InteractivePointsNode()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:

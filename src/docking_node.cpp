@@ -73,15 +73,14 @@ public:
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
     tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
-    ////////////////////////// Timers for control loop
-    // TODO: Enable this once position loop is working
+    ////////////////////////// Timers for control and position loop
     control_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(100), // 10 Hz
-        std::bind(&DockingNode::controlLoop, this));
+    std::chrono::milliseconds(500), // 2 Hz
+    std::bind(&DockingNode::controlLoop, this));
 
     position_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(200), // 5 Hz
-        std::bind(&DockingNode::positionLoop, this));
+    std::chrono::milliseconds(200), // 5 Hz
+    std::bind(&DockingNode::positionLoop, this));
 
     ////////////////////////// Publisher for control commands
     cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);

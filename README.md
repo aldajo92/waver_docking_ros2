@@ -1,4 +1,4 @@
-# WAVER Docking (WIP)
+# WAVER Docking
 
 This is a ROS2 package made in C++ and Python that implements:
 - A modified version of the PID Controller to perform a docking operation based on localization (C++)
@@ -32,32 +32,37 @@ ros2 run waver_docking docking_node --ros-args --params-file ./src/waver_docking
 ros2 launch waver_docking docking.launch.py
 ```
 
-### Point Visualization
+### Interactive Points Visualization
 ```bash
 # Run the graph_2d node with parameters
-ros2 run waver_docking graph_2d_pub_node.py --ros-args --params-file ./src/waver_docking/params/points_params.yaml
+ros2 run waver_docking interactive_points_node.py --ros-args --params-file ./src/waver_docking/params/points_params.yaml
 
-# Or launch the point visualization with RViz2
-ros2 launch waver_docking graph_2d_pub.launch.py
+# Or launch the point interactive with RViz2
+ros2 launch waver_docking interactive_points.launch.py
 ```
 
 ## Parameters
-The points visualization uses parameters defined in `params/points_params.yaml`:
+The interactive points visualization uses parameters defined in the node:
 ```yaml
-points_node:
+interactive_points_node:
   ros__parameters:
     P.x: 1.0  # X coordinate of point P
     P.y: 1.0  # Y coordinate of point P
     Q.x: 0.0  # X coordinate of point Q
     Q.y: 0.0  # Y coordinate of point Q
-    robot_frame: "base_footprint"  # Robot's reference frame for visualization
+    fixed_frame: "map"  # Reference frame for visualization
 ```
 
-## Visualization
-The point visualization:
-- Shows points P and Q in RViz2
-- Uses the robot's reference frame (base_footprint by default)
-- Includes a pre-configured RViz2 setup
+## Visualization Features
+The interactive point visualization provides:
+- Interactive markers for points P and Q that can be moved in real-time
+- Perpendicular line markers for alignment reference
+- Real-time position updates in the terminal
+- Pre-configured RViz2 setup
+
+## Topics
+- `/visualization_marker_array`: MarkerArray messages for point and line visualization
+- `/graph_points/update`: Interactive marker updates for point manipulation
 
 ## Author
 Alejandro Daniel Jose Gomez Florez (aldajo92)
