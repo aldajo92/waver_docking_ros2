@@ -75,12 +75,12 @@ public:
 
     ////////////////////////// Timers for control and position loop
     control_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(500), // 2 Hz
-    std::bind(&DockingNode::controlLoop, this));
+        std::chrono::milliseconds(500), // 2 Hz
+        std::bind(&DockingNode::controlLoop, this));
 
     position_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(200), // 5 Hz
-    std::bind(&DockingNode::positionLoop, this));
+        std::chrono::milliseconds(200), // 5 Hz
+        std::bind(&DockingNode::positionLoop, this));
 
     ////////////////////////// Publisher for control commands
     cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
@@ -91,21 +91,34 @@ public:
 private:
   void controlLoop()
   {
-    double distance_error = 10.0 - current_distance_;
-    double angle_error = 1.0 - current_angle_;
-    double dt = 0.1;
 
-    double distance_output = distance_pid_.compute(distance_error, dt);
-    double angle_output = angle_pid_.compute(angle_error, dt);
-
-    current_distance_ += distance_output * dt;
-    current_angle_ += angle_output * dt;
-
+    double distance_error;
     {
-        std::lock_guard<std::mutex> lock(pose_mutex_);
-        RCLCPP_INFO(this->get_logger(), "Robot position: (%.2f, %.2f), yaw: %.2f",
-                    robot_position_.x(), robot_position_.y(), robot_yaw_);
+      std::lock_guard<std::mutex> lock(pose_mutex_);
+      // Calculate distance error from robot to PQMid_
+      distance_error = (robot_position_ - PQMid_).norm();
+
+      // RCLCPP_INFO(this->get_logger(),
+      //             "Robot position: (%.2f, %.2f), yaw: %.2f, distance error: %.2f",
+      //             robot_position_.x(), robot_position_.y(), robot_yaw_, distance_error);
     }
+
+    double distance_action = distance_pid_.compute(distance_error, 0.5);
+    RCLCPP_INFO(this->get_logger(),
+                "Distance error: %.2f, Distance action: %.2f",
+                distance_error,
+                distance_action);
+
+    // TODO: Used as a code reference to use the PID, remove it later
+    // double distance_error = 10.0 - current_distance_;
+    // double angle_error = 1.0 - current_angle_;
+    // double dt = 0.1;
+
+    // double distance_output = distance_pid_.compute(distance_error, dt);
+    // double angle_output = angle_pid_.compute(angle_error, dt);
+
+    // current_distance_ += distance_output * dt;
+    // current_angle_ += angle_output * dt;
 
     // TODO: This logs can be enabled by a parameter
     // RCLCPP_INFO(this->get_logger(), "P: (%.2f, %.2f), Q: (%.2f, %.2f), PQMid: (%.2f, %.2f)",
@@ -124,8 +137,8 @@ private:
   {
     // Check if the transform is available
     if (tf_buffer_->canTransform(
-            fixed_frame_,                    // target frame
-            robot_frame_,                    // source frame
+            fixed_frame_,                   // target frame
+            robot_frame_,                   // source frame
             tf2::TimePointZero,             // latest available
             std::chrono::milliseconds(10))) // timeout
     {
@@ -151,9 +164,9 @@ private:
           robot_yaw_ = yaw;
         }
 
-        // RCLCPP_INFO(this->get_logger(), "Robot translation in %s: (%.2f, %.2f, %.2f)", 
+        // RCLCPP_INFO(this->get_logger(), "Robot translation in %s: (%.2f, %.2f, %.2f)",
         //             fixed_frame_.c_str(), trans.x, trans.y, trans.z);
-        // RCLCPP_INFO(this->get_logger(), "Robot rotation in %s: (%.2f, %.2f, %.2f, %.2f)", 
+        // RCLCPP_INFO(this->get_logger(), "Robot rotation in %s: (%.2f, %.2f, %.2f, %.2f)",
         //             fixed_frame_.c_str(), rot.x, rot.y, rot.z, rot.w);
       }
       catch (const tf2::TransformException &ex)
@@ -163,7 +176,7 @@ private:
     }
     else
     {
-      RCLCPP_WARN(this->get_logger(), "Transform from %s to %s not available yet.", 
+      RCLCPP_WARN(this->get_logger(), "Transform from %s to %s not available yet.",
                   robot_frame_.c_str(), fixed_frame_.c_str());
     }
   }
