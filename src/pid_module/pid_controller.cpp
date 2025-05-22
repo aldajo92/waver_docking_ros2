@@ -1,20 +1,17 @@
 #include "pid_controller.h"
 
-namespace pid_module
-{
+namespace pid_module {
 
 PIDController::PIDController(double kp, double ki, double kd)
-: kp_(kp), ki_(ki), kd_(kd), integral_(0.0), prev_error_(0.0)
-{}
+    : kp_(kp), ki_(ki), kd_(kd), integral_(0.0), prev_error_(0.0) {
+}
 
-void PIDController::reset()
-{
+void PIDController::reset() {
   integral_ = 0.0;
   prev_error_ = 0.0;
 }
 
-double PIDController::compute(double error, double dt)
-{
+double PIDController::compute(double error, double dt) {
   double p = kp_ * error;
   integral_ += error * dt;
   double i = ki_ * integral_;

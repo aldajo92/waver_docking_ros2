@@ -2,11 +2,11 @@
 #define WAVER_DOCKING__PID_PARAMETERS_H_
 
 #include <string>
-#include "rclcpp/rclcpp.hpp"
-#include "pid_controller.h"
 
-namespace waver_docking
-{
+#include "pid_controller.h"
+#include "rclcpp/rclcpp.hpp"
+
+namespace waver_docking {
 
 /**
  * @brief Class to manage PID parameters for a controller.
@@ -14,10 +14,9 @@ namespace waver_docking
  * This class handles the retrieval and storage of PID parameters
  * (proportional, integral, derivative) from a ROS2 node.
  */
-class PIDParameters
-{
+class PIDParameters {
 public:
-  PIDParameters(rclcpp::Node & node, const std::string & ns);
+  PIDParameters(rclcpp::Node& node, const std::string& ns);
 
   pid_module::PIDController make_controller() const;
 

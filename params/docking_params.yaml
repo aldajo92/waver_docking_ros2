@@ -8,10 +8,11 @@
 
 docking_node:
   ros__parameters:
-    distance_pid.kp: 1.0
-    distance_pid.ki: 0.1
+    distance_pid.kp: 0.5
+    distance_pid.ki: 0.08
     distance_pid.kd: 0.01
     angle_pid.kp: 2.0
     angle_pid.ki: 0.2
     angle_pid.kd: 0.02
     robot_frame: "base_footprint"
+    cmd_vel_topic: "cmd_vel"

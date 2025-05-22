@@ -1,11 +1,9 @@
 #ifndef PID_MODULE_PID_CONTROLLER_H_
 #define PID_MODULE_PID_CONTROLLER_H_
 
-namespace pid_module
-{
+namespace pid_module {
 
-class PIDController
-{
+class PIDController {
 public:
   /// @param kp Proportional gain
   /// @param ki Integral gain
