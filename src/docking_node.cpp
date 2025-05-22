@@ -15,7 +15,8 @@ public:
         distance_pid_params_(*this, "distance_pid"),
         angle_pid_params_(*this, "angle_pid"),
         distance_pid_(distance_pid_params_.make_controller()),
-        angle_pid_(angle_pid_params_.make_controller())
+        angle_pid_(angle_pid_params_.make_controller()),
+        position_valid_(false)
   {
 
     // Declare parameters
@@ -91,19 +92,31 @@ public:
 private:
   void controlLoop()
   {
+    Eigen::Vector2d robot_position;
+    double robot_yaw;
+    bool is_valid;
 
-    double distance_error;
     {
       std::lock_guard<std::mutex> lock(pose_mutex_);
-      // Calculate distance error from robot to PQMid_
-      distance_error = (robot_position_ - PQMid_).norm();
-
-      // RCLCPP_INFO(this->get_logger(),
-      //             "Robot position: (%.2f, %.2f), yaw: %.2f, distance error: %.2f",
-      //             robot_position_.x(), robot_position_.y(), robot_yaw_, distance_error);
+      is_valid = position_valid_;
+      if (is_valid) {
+        robot_position = robot_position_;
+        robot_yaw = robot_yaw_;
+      }
     }
 
+    if (!is_valid) {
+      RCLCPP_WARN_THROTTLE(this->get_logger(), 
+                          *(this->get_clock()), 
+                          5000,  // Throttle to warning every 5 seconds
+                          "Control loop skipped: Invalid position data");
+      return;
+    }
+
+    double distance_error = (robot_position - PQMid_).norm();
     double distance_action = distance_pid_.compute(distance_error, 0.5);
+
+    
     RCLCPP_INFO(this->get_logger(),
                 "Distance error: %.2f, Distance action: %.2f",
                 distance_error,
@@ -135,6 +148,10 @@ private:
 
   void positionLoop()
   {
+    bool new_position_valid = false;  // Local flag for this iteration
+    Eigen::Vector2d new_position;
+    double new_yaw;
+    
     // Check if the transform is available
     if (tf_buffer_->canTransform(
             fixed_frame_,                   // target frame
@@ -155,29 +172,31 @@ private:
         // Convert quaternion to yaw
         double siny_cosp = 2.0 * (rot.w * rot.z + rot.x * rot.y);
         double cosy_cosp = 1.0 - 2.0 * (rot.y * rot.y + rot.z * rot.z);
-        double yaw = std::atan2(siny_cosp, cosy_cosp);
-
-        // Update robot position and yaw
-        {
-          std::lock_guard<std::mutex> lock(pose_mutex_);
-          robot_position_ = Eigen::Vector2d(trans.x, trans.y);
-          robot_yaw_ = yaw;
-        }
-
-        // RCLCPP_INFO(this->get_logger(), "Robot translation in %s: (%.2f, %.2f, %.2f)",
-        //             fixed_frame_.c_str(), trans.x, trans.y, trans.z);
-        // RCLCPP_INFO(this->get_logger(), "Robot rotation in %s: (%.2f, %.2f, %.2f, %.2f)",
-        //             fixed_frame_.c_str(), rot.x, rot.y, rot.z, rot.w);
+        new_yaw = std::atan2(siny_cosp, cosy_cosp);
+        new_position = Eigen::Vector2d(trans.x, trans.y);
+        new_position_valid = true;  // Set to true only if we successfully got the transform
       }
       catch (const tf2::TransformException &ex)
       {
         // RCLCPP_WARN(this->get_logger(), "Could not get transform: %s", ex.what());
+        new_position_valid = false;
       }
     }
     else
     {
-      RCLCPP_WARN(this->get_logger(), "Transform from %s to %s not available yet.",
-                  robot_frame_.c_str(), fixed_frame_.c_str());
+      // RCLCPP_WARN(this->get_logger(), "Transform from %s to %s not available yet.",
+      //             robot_frame_.c_str(), fixed_frame_.c_str());
+      new_position_valid = false;
+    }
+    
+    // Update all shared state atomically
+    {
+      std::lock_guard<std::mutex> lock(pose_mutex_);
+      position_valid_ = new_position_valid;
+      if (new_position_valid) {
+        robot_position_ = new_position;
+        robot_yaw_ = new_yaw;
+      }
     }
   }
 
@@ -217,6 +236,9 @@ private:
   // Timer for control loop
   rclcpp::TimerBase::SharedPtr control_timer_;
   rclcpp::TimerBase::SharedPtr position_timer_;
+
+  // Add to private member variables
+  bool position_valid_;  // Flag to indicate if position data is valid
 };
 
 int main(int argc, char **argv)
